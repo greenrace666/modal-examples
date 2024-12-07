@@ -43,7 +43,7 @@ app = modal.App(name="boltz")
 
 @app.local_entrypoint()
 def main(
-    force_download: bool = False, input: str = None, args: str = "",out_dir: str = "./"
+    force_download: bool = False, input: str = None, args: str = ""
 ):
     print("🧬 loading model remotely")
     download_model.remote(force_download)
