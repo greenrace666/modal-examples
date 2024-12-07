@@ -48,7 +48,7 @@ def main(
     print("🧬 loading model remotely")
     download_model.remote(force_download)
     input1=Path(input).resolve()
-    input2=Path(input1).name
+    input2=Path(input1).stem
     if input is None:
         print("Provide input yaml by --input")
     input_yaml = input1.read_text()
