@@ -113,7 +113,7 @@ models_dir = Path("/models/boltz1")
     image=image,
     volumes={models_dir: boltz_model_volume},
     gpu="L4",
-    timeout=3600
+    timeout=86400
 )
 def boltz1_inference(
     boltz_input_yaml: str,args=""):
