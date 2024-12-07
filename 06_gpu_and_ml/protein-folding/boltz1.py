@@ -48,14 +48,13 @@ def main(
     print("🧬 loading model remotely")
     download_model.remote(force_download)
     input1=Path(input).resolve()
-    input2=Path(input1).stem
     if input is None:
         print("Provide input yaml by --input")
     input_yaml = input1.read_text()
 
     print(f"🧬 running boltz with input from {input}")
     output=boltz1_inference.remote(input_yaml)
-    output_path = Path(f"boltz_{input2}_result.zip")
+    output_path = Path(f"boltz_{input1.stem}_result.zip")
     output_path.parent.mkdir(exist_ok=True, parents=True)
     print(f"🧬 writing output to {output_path}")
     output_path.write_bytes(output)
