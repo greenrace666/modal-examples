@@ -26,6 +26,7 @@
 
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 from uuid import uuid4
 
@@ -84,7 +85,7 @@ def main(
     results = chai1_inference.remote(fasta_content, inference_config, run_id)
 
     if output_dir is None:
-        output_dir = Path("/tmp/chai1")
+        output_dir = Path("./chai3")
         output_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"🧬 saving results to disk locally in {output_dir}")
@@ -107,9 +108,12 @@ def main(
 
 # Here, we do it with one line, using the `uv` package manager for extra speed.
 
-image = modal.Image.debian_slim(python_version="3.12").run_commands(
-    "uv pip install --system --compile-bytecode chai_lab==0.5.0 hf_transfer==0.1.8"
-)
+image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .pip_install("uv")
+    .run_commands(
+        "uv pip install --system --compile-bytecode chai_lab==0.5.0 hf_transfer==0.1.8"
+    ))
 
 # ## Storing Chai-1 model weights on Modal with Volumes
 
@@ -135,7 +139,7 @@ models_dir = Path("/models/chai1")
 
 image = image.env(  # update the environment variables in the image to...
     {
-        "CHAI_DOWNLOADS_DIR": str(models_dir),  # point the chai code to it
+        "CHAI_DOWNLOADS_DIR": "/models/chai1",  # point the chai code to it
         "HF_HUB_ENABLE_HF_TRANSFER": "1",  # speed up downloads
     }
 )
@@ -179,7 +183,7 @@ preds_dir = Path("/preds")
 
 
 @app.function(
-    timeout=15 * MINUTES,
+    timeout=1440 * MINUTES,
     gpu="H100",
     volumes={models_dir: chai_model_volume, preds_dir: chai_preds_volume},
     image=image,
@@ -204,6 +208,7 @@ def chai1_inference(
         output_dir=output_dir,
         device=torch.device("cuda"),
         **inference_config,
+        use_msa_server=True,
     )
 
     print(
@@ -242,7 +247,9 @@ def chai1_inference(
 
 @app.function(
     volumes={models_dir: chai_model_volume},
-    image=modal.Image.debian_slim().pip_install("requests"),
+    image=modal.Image.debian_slim(python_version="3.12").pip_install(
+        "requests"
+    ),
 )
 async def download_inference_dependencies(force=False):
     import asyncio
@@ -271,6 +278,7 @@ async def download_inference_dependencies(force=False):
                 print(f"🧬 checking {dep}")
             local_path = models_dir / dep
             if force or not local_path.exists():
+                return ()
                 url = base_url + dep
                 print(f"🧬 downloading {dep}")
                 tasks.append(download_file(session, url, local_path))
