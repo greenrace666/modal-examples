@@ -26,7 +26,6 @@
 
 import hashlib
 import json
-import subprocess
 from pathlib import Path
 from uuid import uuid4
 
@@ -85,7 +84,7 @@ def main(
     results = chai1_inference.remote(fasta_content, inference_config, run_id)
 
     if output_dir is None:
-        output_dir = Path("./chai3")
+        output_dir = Path("./chai1")
         output_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"🧬 saving results to disk locally in {output_dir}")
@@ -278,7 +277,6 @@ async def download_inference_dependencies(force=False):
                 print(f"🧬 checking {dep}")
             local_path = models_dir / dep
             if force or not local_path.exists():
-                return ()
                 url = base_url + dep
                 print(f"🧬 downloading {dep}")
                 tasks.append(download_file(session, url, local_path))
